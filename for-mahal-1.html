@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For Mahal</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #07060f;
+    --deep: #0d0b1a;
+    --gold: #c9a84c;
+    --gold-soft: rgba(201,168,76,0.15);
+    --rose: #c96b7a;
+    --rose-soft: rgba(201,107,122,0.12);
+    --cream: #f0e2d0;
+    --muted: #7a6e87;
+    --star: rgba(201,168,76,0.7);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'Lora', serif;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ── Canvas Stars ── */
+  #canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Intro Screen ── */
+  #intro {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: opacity 1.2s ease;
+    gap: 0.5rem;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  #intro .heart-wrap {
+    font-size: 3.5rem;
+    animation: heartbeat 1.8s ease-in-out infinite;
+    margin-bottom: 1rem;
+  }
+
+  #intro .label {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    color: var(--muted);
+    font-size: 0.9rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: riseIn 1s ease 0.4s forwards;
+  }
+
+  #intro h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 8vw, 3.5rem);
+    color: var(--gold);
+    font-weight: 400;
+    line-height: 1.2;
+    opacity: 0;
+    animation: riseIn 1s ease 0.8s forwards;
+  }
+
+  #intro .sub {
+    color: var(--muted);
+    font-size: 0.95rem;
+    font-style: italic;
+    opacity: 0;
+    animation: riseIn 1s ease 1.2s forwards;
+    margin-top: 0.5rem;
+  }
+
+  #open-btn {
+    margin-top: 2.5rem;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'Lora', serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.85rem 2.5rem;
+    cursor: pointer;
+    opacity: 0;
+    animation: riseIn 1s ease 1.8s forwards;
+    transition: background 0.3s, color 0.3s;
+    border-radius: 2px;
+  }
+
+  #open-btn:hover { background: var(--gold); color: var(--bg); }
+
+  /* ── Main Letter ── */
+  #main {
+    display: none;
+    position: relative;
+    z-index: 1;
+    max-width: 660px;
+    margin: 0 auto;
+    padding: 6rem 1.8rem 10rem;
+  }
+
+  /* Gradient top fade */
+  #main::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 140px;
+    background: linear-gradient(to bottom, var(--bg) 30%, transparent);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .block {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.9s ease, transform 0.9s ease;
+    margin-bottom: 4.5rem;
+  }
+
+  .block.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .block.center { text-align: center; }
+
+  .opening {
+    padding-top: 1rem;
+    text-align: center;
+  }
+
+  .opening h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.9rem, 6vw, 2.8rem);
+    color: var(--gold);
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  .opening h2 em {
+    color: var(--rose);
+    font-style: italic;
+  }
+
+  h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.4rem, 4vw, 1.9rem);
+    color: var(--gold);
+    font-weight: 400;
+    margin-bottom: 1.4rem;
+    line-height: 1.4;
+  }
+
+  h3 em { color: var(--rose); font-style: italic; }
+
+  p {
+    line-height: 2;
+    color: var(--cream);
+    margin-bottom: 1.3rem;
+    font-size: 1.02rem;
+  }
+
+  p.accent {
+    color: var(--rose);
+    font-style: italic;
+    font-size: 1.12rem;
+    line-height: 1.8;
+  }
+
+  p.soft { color: var(--muted); font-size: 0.95rem; }
+
+  .divider {
+    text-align: center;
+    color: var(--gold);
+    font-size: 1rem;
+    letter-spacing: 0.8rem;
+    margin: 3rem 0;
+    opacity: 0.5;
+  }
+
+  .sig {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    color: var(--gold);
+    font-size: 1.6rem;
+    text-align: right;
+    margin-top: 2.5rem;
+    padding-right: 0.5rem;
+  }
+
+  /* gold card */
+  .quote-card {
+    border-left: 2px solid var(--rose);
+    padding: 1.2rem 1.5rem;
+    background: var(--rose-soft);
+    border-radius: 0 6px 6px 0;
+    margin: 1.5rem 0;
+  }
+
+  .quote-card p {
+    font-style: italic;
+    color: var(--rose);
+    font-size: 1.05rem;
+    margin: 0;
+  }
+
+  /* ── Floating Hearts ── */
+  .float-el {
+    position: fixed;
+    bottom: -10px;
+    pointer-events: none;
+    font-size: 1.1rem;
+    animation: floatUp 5s ease forwards;
+    z-index: 0;
+  }
+
+  /* ── Music Button ── */
+  #music-btn {
+    position: fixed;
+    bottom: 1.8rem;
+    right: 1.8rem;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid var(--gold);
+    background: var(--gold-soft);
+    color: var(--gold);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    transition: background 0.3s, color 0.3s;
+    backdrop-filter: blur(6px);
+  }
+
+  #music-btn:hover { background: var(--gold); color: var(--bg); }
+
+  /* ── Keyframes ── */
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    30% { transform: scale(1.18); }
+    60% { transform: scale(1.08); }
+  }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes floatUp {
+    0%   { opacity: 0.9; transform: translateY(0) rotate(-5deg) scale(1); }
+    50%  { opacity: 0.6; }
+    100% { opacity: 0;   transform: translateY(-95vh) rotate(12deg) scale(0.7); }
+  }
+
+  @keyframes shimmer {
+    0%,100% { opacity: 0.3; }
+    50%      { opacity: 0.9; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<!-- ─── INTRO ─── -->
+<div id="intro">
+  <div class="heart-wrap">🤍</div>
+  <p class="label">a letter for you</p>
+  <h1>For Mahal</h1>
+  <p class="sub">Something I should have said a long time ago.</p>
+  <button id="open-btn" onclick="openLetter()">Open the letter</button>
+</div>
+
+<!-- ─── LETTER ─── -->
+<div id="main">
+
+  <div class="block opening">
+    <h2>Mahal,<br><em>I owe you more than sorry.</em></h2>
+  </div>
+
+  <div class="block">
+    <p>I've been sitting here — quiet, with the weight of today — not just replaying what I said, but really listening to what you told me.</p>
+    <p>You said you get anxious. <em>Extremely</em> anxious. Every time. And I kept dismissing it with "it's just a joke." I made your pain into something small. I turned your worry into a punchline — and that wasn't love. That was carelessness dressed up as humour.</p>
+    <p>I'm sorry, Mahal. Not just for today. For every time I did that.</p>
+  </div>
+
+  <div class="divider">✦ &nbsp; ✦ &nbsp; ✦</div>
+
+  <div class="block">
+    <h3>I hear you now.</h3>
+    <p>Long distance already asks so much of us. Every silence is longer. Every distance between messages feels wider. When you talk to someone — a friend, anyone — the last thing you should have to wonder is whether your partner trusts you.</p>
+    <p>My jokes weren't just words. They were little knives. And I kept handing them to you, smiling, then wondering why you bled.</p>
+    <div class="quote-card">
+      <p>"I only get anxious, extremely anxious every time… always wondering what I did wrong only for you to say it's just a joke."</p>
+    </div>
+    <p>I read that line over and over. That's not you being sensitive. That's you telling me I've been failing you in a pattern — and I wasn't paying attention.</p>
+  </div>
+
+  <div class="divider">✦ &nbsp; ✦ &nbsp; ✦</div>
+
+  <div class="block">
+    <h3>What I promise you, <em>Mahal.</em></h3>
+    <p>No more jokes that make you feel watched, tested, or doubted. No more "it's just a joke" when your feelings are right there in front of me asking to be held.</p>
+    <p>You deserve a partner whose words build you up — especially across the distance, where words are almost all we have. I want to be that person. I'm choosing to become him — not just for you, but because of you.</p>
+    <p class="accent">You are not too much. You never were. You were just with someone who wasn't doing enough.</p>
+  </div>
+
+  <div class="divider">✦ &nbsp; ✦ &nbsp; ✦</div>
+
+  <div class="block center">
+    <h3 style="margin-bottom:1rem;">"Don't make me hate you."</h3>
+    <p>Those words broke something in me, Mahal. Because the very last thing I ever want to be is someone you hate. Someone who made love feel like anxiety. Someone you had to protect yourself from.</p>
+    <p>You don't have to say anything right now. You don't have to forgive me today. Take every second of space you need — I'm not going anywhere, and I'm not chasing. I'm just here, being still, and making sure the version of me waiting for you is worth coming back to.</p>
+    <p class="soft">I love you. Quietly. Without pressure. With both hands open.</p>
+    <div class="sig">— Always yours, always &nbsp;🤍</div>
+  </div>
+
+</div>
+
+<!-- YouTube IFrame API Player -->
+<div id="yt-player" style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;"></div>
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<!-- Music Button -->
+<button id="music-btn" title="Toggle music">♪</button>
+
+<script>
+/* ── STAR CANVAS ── */
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+let W, H, stars = [];
+
+function initCanvas() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  stars = [];
+  for (let i = 0; i < 150; i++) {
+    stars.push({
+      x:     Math.random() * W,
+      y:     Math.random() * H,
+      r:     Math.random() * 1.6 + 0.3,
+      base:  Math.random() * 0.5 + 0.15,
+      speed: Math.random() * 0.005 + 0.002,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+}
+initCanvas();
+window.addEventListener('resize', initCanvas);
+
+function drawStars(t) {
+  ctx.clearRect(0, 0, W, H);
+  stars.forEach(s => {
+    const a = s.base * (0.5 + 0.5 * Math.sin(t * s.speed * 1000 + s.phase));
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(201,168,76,${a})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+requestAnimationFrame(drawStars);
+
+/* ── FLOATING HEARTS ── */
+const floatSyms = ['🤍','✨','💛','🌸'];
+function spawnFloat() {
+  const el = document.createElement('span');
+  el.className = 'float-el';
+  el.textContent = floatSyms[Math.floor(Math.random() * floatSyms.length)];
+  el.style.left = (5 + Math.random() * 90) + 'vw';
+  el.style.animationDuration = (3.5 + Math.random() * 3) + 's';
+  el.style.fontSize = (0.9 + Math.random() * 0.8) + 'rem';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 7000);
+}
+
+/* ── YOUTUBE MUSIC (IFrame Player API) ── */
+const YT_ID = 'xGPeNN9S0Fg';
+let ytPlayer = null, musicOn = false, ytReady = false, playQueued = false;
+
+window.onYouTubeIframeAPIReady = function () {
+  ytPlayer = new YT.Player('yt-player', {
+    videoId: YT_ID,
+    playerVars: { autoplay: 0, controls: 0, loop: 1, playlist: YT_ID, playsinline: 1 },
+    events: {
+      onReady: function () {
+        ytReady = true;
+        if (playQueued) { ytPlayer.playVideo(); playQueued = false; }
+      }
+    }
+  });
+};
+
+function startMusic() {
+  musicOn = true;
+  document.getElementById('music-btn').textContent = '♬';
+  if (ytReady && ytPlayer) ytPlayer.playVideo();
+  else playQueued = true;
+}
+
+function stopMusic() {
+  musicOn = false;
+  document.getElementById('music-btn').textContent = '♪';
+  if (ytReady && ytPlayer) ytPlayer.pauseVideo();
+}
+
+document.getElementById('music-btn').addEventListener('click', () => {
+  musicOn ? stopMusic() : startMusic();
+});
+
+/* ── OPEN LETTER ── */
+function openLetter() {
+  startMusic();
+  const intro = document.getElementById('intro');
+  intro.style.opacity = '0';
+  intro.style.pointerEvents = 'none';
+  setTimeout(() => {
+    intro.style.display = 'none';
+    const main = document.getElementById('main');
+    main.style.display = 'block';
+    const btn = document.getElementById('music-btn');
+    btn.style.display = 'flex';
+    setupScrollReveal();
+    setInterval(spawnFloat, 3200);
+  }, 1200);
+}
+
+/* ── SCROLL REVEAL ── */
+function setupScrollReveal() {
+  const blocks = document.querySelectorAll('.block');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); });
+  }, { threshold: 0.12 });
+  blocks.forEach(b => io.observe(b));
+}
+</script>
+</body>
+</html>
