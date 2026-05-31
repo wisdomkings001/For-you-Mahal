@@ -403,7 +403,9 @@ const audio = document.getElementById('bg-audio');
 let musicOn = false;
 
 function startMusic() {
-  audio.play().catch(() => {});
+  audio.volume = 1.0;
+  const p = audio.play();
+  if (p !== undefined) p.catch(() => {});
   musicOn = true;
   document.getElementById('music-btn').textContent = '♬';
 }
