@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B2 CORS Setup — one time use</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:#0a0a0f;color:#f0ede6;font-family:-apple-system,system-ui,sans-serif;
+  padding:1.5rem;line-height:1.6;
+}
+h1{font-size:1.2rem;margin-bottom:0.4rem;color:#d4956a;}
+p.sub{color:#888;font-size:0.85rem;margin-bottom:1.5rem;}
+label{display:block;font-size:0.8rem;color:#aaa;margin-bottom:0.3rem;margin-top:1rem;}
+input{
+  width:100%;padding:0.7rem;border-radius:8px;border:1px solid #333;
+  background:#16161f;color:#fff;font-size:0.95rem;
+}
+button{
+  margin-top:1.5rem;width:100%;padding:0.9rem;border-radius:8px;border:none;
+  background:#d4956a;color:#180d00;font-weight:600;font-size:1rem;cursor:pointer;
+}
+button:disabled{opacity:0.5;}
+#log{
+  margin-top:1.5rem;padding:1rem;border-radius:8px;background:#111118;
+  font-family:monospace;font-size:0.78rem;white-space:pre-wrap;word-break:break-word;
+  border:1px solid #2a2a35;min-height:60px;
+}
+.ok{color:#4ade80;}
+.err{color:#f87171;}
+</style>
+</head>
+<body>
+
+<h1>B2 CORS Setup</h1>
+<p class="sub">One-time tool — sets the CORS rule your JustUs app needs to upload/watch/delete videos. Safe to close this page after it says "Done".</p>
+
+<label>Application Key ID (keyID)</label>
+<input id="keyId" type="text" value="00570412e2308820000000001">
+
+<label>Application Key</label>
+<input id="appKey" type="text" value="K0053w8AOiAQXQMSwtG3xSHfyCsHo7M">
+
+<label>Bucket ID</label>
+<input id="bucketId" type="text" value="c7004421228ee2d390f80812">
+
+<label>Your app's origin (already filled in — don't change)</label>
+<input id="origin" type="text" value="https://wisdomkings001.github.io">
+
+<button id="runBtn" onclick="run()">Set CORS Rule</button>
+
+<div id="log">Ready.</div>
+
+<script>
+function log(msg, cls){
+  const el = document.getElementById('log');
+  const line = document.createElement('div');
+  if(cls) line.className = cls;
+  line.textContent = msg;
+  el.appendChild(line);
+}
+
+async function run(){
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  document.getElementById('log').innerHTML = '';
+
+  const keyId = document.getElementById('keyId').value.trim();
+  const appKey = document.getElementById('appKey').value.trim();
+  const bucketId = document.getElementById('bucketId').value.trim();
+  const origin = document.getElementById('origin').value.trim();
+
+  try {
+    log('Step 1 — logging in to your Backblaze account…');
+    const authRes = await fetch('https://api.backblazeb2.com/b2api/v3/b2_authorize_account', {
+      method: 'GET',
+      headers: { 'Authorization': 'Basic ' + btoa(keyId + ':' + appKey) }
+    });
+    const authData = await authRes.json();
+    if(!authRes.ok){
+      log('Login failed: ' + (authData.message || authRes.status), 'err');
+      log('Double check the keyID and Application Key are typed exactly right.', 'err');
+      btn.disabled = false;
+      return;
+    }
+    const accountId = authData.accountId;
+    const apiUrl = authData.apiInfo.storageApi.apiUrl;
+    log('Logged in OK.', 'ok');
+
+    log('Step 2 — applying the CORS rule to your bucket…');
+    const corsRules = [{
+      corsRuleName: 'allowJustUsApp',
+      allowedOrigins: [origin],
+      allowedHeaders: ['*'],
+      allowedOperations: [
+        'b2_download_file_by_id',
+        'b2_download_file_by_name',
+        'b2_upload_file',
+        'b2_upload_part',
+        's3_get',
+        's3_put',
+        's3_delete',
+        's3_head'
+      ],
+      exposeHeaders: ['etag'],
+      maxAgeSeconds: 3600
+    }];
+
+    const updateRes = await fetch(apiUrl + '/b2api/v3/b2_update_bucket', {
+      method: 'POST',
+      headers: {
+        'Authorization': authData.authorizationToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ accountId, bucketId, corsRules })
+    });
+    const updateData = await updateRes.json();
+    if(!updateRes.ok){
+      log('CORS update failed: ' + (updateData.message || updateRes.status), 'err');
+      log('Double check the Bucket ID is correct.', 'err');
+      btn.disabled = false;
+      return;
+    }
+
+    log('CORS rule applied successfully!', 'ok');
+    log('');
+    log('Done. Go back to JustUs and try uploading again — give it about a minute first.', 'ok');
+  } catch(err) {
+    log('Something went wrong: ' + err.message, 'err');
+    log('Check your internet connection and try again.', 'err');
+  }
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
